@@ -20,13 +20,14 @@ public class SimpleKafkaConsumer {
         this.props = new Properties();
 
         props.put("bootstrap.servers","kafka1:9092,kafka2:9094,kafka3:9096");
-        props.put("group.id","my-consumer-group2");
+        props.put("group.id","my-consumer-group3");
         props.put("key.deserializer","org.apache.kafka.common.serialization.StringDeserializer");
         props.put("value.deserializer","org.apache.kafka.common.serialization.StringDeserializer");
         props.put("auto.offset.reset","earliest");
         props.put("enable.auto.commit","true");
 
         this.consumer = new KafkaConsumer<>(props);
+        consumer.subscribe(List.of("test-topic"));
     }
 
     /**
@@ -36,17 +37,14 @@ public class SimpleKafkaConsumer {
      * @throws KafkaException if the consume operation fails
      */
     public void consume(String topic) {
-        consumer.subscribe(List.of("test-topic"));
+        ConsumerRecords<String, String> records = consumer.poll(Duration.ofMillis(100));
 
-        while(true){
-            ConsumerRecords<String, String> records = consumer.poll(Duration.ofMillis(100));
-            for( ConsumerRecord<String, String> record :records){
-                try {
-                    System.out.println("Received: " + record.value() + " from partition " + record.partition() + " at offset " + record.offset());
-                    consumer.commitSync();
-                } catch (Exception e){
-                    e.printStackTrace();
-                }
+        for( ConsumerRecord<String, String> record :records){
+            try {
+                System.out.println("Received: " + record.value() + " from partition " + record.partition() + " at offset " + record.offset());
+                consumer.commitSync();
+            } catch (Exception e){
+                e.printStackTrace();
             }
         }
     }
