@@ -5,11 +5,26 @@ import com.example.kafka.SimpleKafkaProducer;
 
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
-import java.util.concurrent.TimeUnit;
 
 public class Main {
     public static void main(String[] args) {
-        System.out.println("Hello World, from Kafka-intro module :smile:");
-        
+        SimpleKafkaProducer producer = new SimpleKafkaProducer();
+
+        ExecutorService executorService = Executors.newFixedThreadPool(2);
+        executorService.submit(
+                () -> {
+                    try {
+                        while(true) {
+                            Thread.sleep(1000);
+                            producer.send("test-topic", "Hello World!");
+                        }
+                    } catch (Exception e) {
+                        e.printStackTrace();
+                    }
+                }
+        );
+
+        SimpleKafkaConsumer consumer = new SimpleKafkaConsumer();
+        consumer.consume();
     }
 }

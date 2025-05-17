@@ -23,11 +23,11 @@ public class SimpleKafkaProducer {
         System.out.println("Producer created with properties: " + props);
     }
 
-    public void send(String topic, String message) {
+    public synchronized void send(String topic, String message) {
         try {
             System.out.println("Attempting to send message: '" + message + "' to topic: " + topic);
             ProducerRecord<String, String> record = new ProducerRecord<>(topic, message);
-            
+
             producer.send(record, (metadata, exception) -> {
                 if (exception != null) {
                     System.err.println("Error sending message: " + exception.getMessage());

@@ -3,11 +3,11 @@ package com.example.kafka;
 import org.apache.kafka.clients.consumer.ConsumerRecord;
 import org.apache.kafka.clients.consumer.ConsumerRecords;
 import org.apache.kafka.clients.consumer.KafkaConsumer;
-import org.apache.kafka.common.KafkaException;
 
 import java.time.Duration;
 import java.util.List;
 import java.util.Properties;
+import java.util.UUID;
 
 /**
  * A simple Kafka consumer that handles message consumption from specified topics.
@@ -17,39 +17,45 @@ public class SimpleKafkaConsumer {
     private KafkaConsumer<String, String> consumer;
 
     public SimpleKafkaConsumer() {
-        this.props = new Properties();
+        props = new Properties();
 
         props.put("bootstrap.servers","kafka1:9092,kafka2:9094,kafka3:9096");
-        props.put("group.id","my-consumer-group3");
+        //props.put("group.id","my-consumer-group3");
+        props.put("group.id", UUID.randomUUID().toString());
         props.put("key.deserializer","org.apache.kafka.common.serialization.StringDeserializer");
         props.put("value.deserializer","org.apache.kafka.common.serialization.StringDeserializer");
-        props.put("auto.offset.reset","earliest");
-        props.put("enable.auto.commit","true");
+        props.put("auto.offset.reset", "earliest");
 
-        this.consumer = new KafkaConsumer<>(props);
+        consumer = new KafkaConsumer<>(props);
         consumer.subscribe(List.of("test-topic"));
     }
 
     /**
      * Consumes messages from the specified topic.
-     *
-     * @param topic the topic to consume messages from
-     * @throws KafkaException if the consume operation fails
      */
-    public void consume(String topic) {
-        ConsumerRecords<String, String> records = consumer.poll(Duration.ofMillis(100));
+    public void consume() {
+        while(true) {
+            ConsumerRecords<String, String> records = consumer.poll(Duration.ofMillis(500));
 
-        for( ConsumerRecord<String, String> record :records){
-            try {
+            for ( ConsumerRecord<String, String> record : records ) {
                 System.out.println("Received: " + record.value() + " from partition " + record.partition() + " at offset " + record.offset());
+            }
+
+            if(records.count() > 0)
                 consumer.commitSync();
-            } catch (Exception e){
+
+            try {
+                Thread.sleep(2500);
+            } catch (Exception e) {
                 e.printStackTrace();
             }
         }
     }
 
+    /**
+     * Closes the consumer.
+     */
     public void close() {
-        this.consumer.close();
+        consumer.close();
     }
 }
