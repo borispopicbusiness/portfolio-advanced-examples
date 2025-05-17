@@ -17,18 +17,17 @@ public class SimpleKafkaProducer {
         props.put("bootstrap.servers", "kafka1:9092,kafka2:9094,kafka3:9096");
         props.put("key.serializer", "org.apache.kafka.common.serialization.StringSerializer");
         props.put("value.serializer", "org.apache.kafka.common.serialization.StringSerializer");
-        //props.put("acks", "all");
-        props.put("enable.idempotence", "true");
+        props.put("acks", "all");
 
         this.producer = new KafkaProducer<>(props);
         System.out.println("Producer created with properties: " + props);
     }
 
-    public void send(String topic, String message) {
+    public synchronized void send(String topic, String message) {
         try {
             System.out.println("Attempting to send message: '" + message + "' to topic: " + topic);
             ProducerRecord<String, String> record = new ProducerRecord<>(topic, message);
-            
+
             producer.send(record, (metadata, exception) -> {
                 if (exception != null) {
                     System.err.println("Error sending message: " + exception.getMessage());
