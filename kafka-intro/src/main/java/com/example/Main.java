@@ -25,6 +25,22 @@ public class Main {
         );
 
         SimpleKafkaConsumer consumer = new SimpleKafkaConsumer();
-        consumer.consume();
+
+        executorService.submit(() -> {
+            try {
+                while(true) {
+                    Thread.sleep(500);
+                    consumer.consume();
+                }
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+        });
+
+        Runtime.getRuntime().addShutdownHook(new Thread(() -> {
+            System.out.println("Shutting down...");
+            consumer.close();
+            producer.close();
+        }));
     }
 }

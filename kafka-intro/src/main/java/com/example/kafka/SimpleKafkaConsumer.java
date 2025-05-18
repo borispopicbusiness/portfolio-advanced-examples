@@ -15,13 +15,14 @@ import java.util.UUID;
 public class SimpleKafkaConsumer {
     private Properties props;
     private KafkaConsumer<String, String> consumer;
+    private ConsumerRecords<String, String> records;
 
     public SimpleKafkaConsumer() {
         props = new Properties();
 
-        props.put("bootstrap.servers","kafka1:9092,kafka2:9094,kafka3:9096");
-        //props.put("group.id","my-consumer-group3");
-        props.put("group.id", UUID.randomUUID().toString());
+        props.put("bootstrap.servers","kafka1:9092,kafka2:9094");//,kafka3:9096
+        props.put("group.id","my-consumer-group3");
+        //props.put("group.id", UUID.randomUUID().toString());
         props.put("key.deserializer","org.apache.kafka.common.serialization.StringDeserializer");
         props.put("value.deserializer","org.apache.kafka.common.serialization.StringDeserializer");
         props.put("auto.offset.reset", "earliest");
@@ -35,7 +36,7 @@ public class SimpleKafkaConsumer {
      */
     public void consume() {
         while(true) {
-            ConsumerRecords<String, String> records = consumer.poll(Duration.ofMillis(500));
+            records = consumer.poll(Duration.ofMillis(149));
 
             for ( ConsumerRecord<String, String> record : records ) {
                 System.out.println("Received: " + record.value() + " from partition " + record.partition() + " at offset " + record.offset());
@@ -43,12 +44,6 @@ public class SimpleKafkaConsumer {
 
             if(records.count() > 0)
                 consumer.commitSync();
-
-            try {
-                Thread.sleep(2500);
-            } catch (Exception e) {
-                e.printStackTrace();
-            }
         }
     }
 
@@ -56,6 +51,15 @@ public class SimpleKafkaConsumer {
      * Closes the consumer.
      */
     public void close() {
-        consumer.close();
+        if(records.count() > 0) {
+            System.out.println("Committing last offsets...");
+            consumer.commitSync();
+            System.out.println("Last offsets committed successfully");
+        }
+        try {
+            consumer.close();
+        } catch(java.util.ConcurrentModificationException e) {
+            System.out.println("Ignoring ConcurrentModificationException");
+        }
     }
 }

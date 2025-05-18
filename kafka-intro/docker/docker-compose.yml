@@ -27,18 +27,18 @@ services:
     networks:
       - kafka-network
 
-  kafka3:
-    image: confluentinc/cp-kafka:7.3.0
-    container_name: kafka3
-    ports:
-      - "9096:9092"
-    volumes:
-      - ./configs/kafka3.properties:/etc/kafka/kafka.properties
-      - ./scripts/start-kafka.sh:/start-kafka.sh
-      - ./data/kafka3:/tmp/kraft-combined-logs
-    command: ["bash", "-c", "/start-kafka.sh"]
-    networks:
-      - kafka-network
+#  kafka3:
+#    image: confluentinc/cp-kafka:7.3.0
+#    container_name: kafka3
+#    ports:
+#      - "9096:9092"
+#    volumes:
+#      - ./configs/kafka3.properties:/etc/kafka/kafka.properties
+#      - ./scripts/start-kafka.sh:/start-kafka.sh
+#      - ./data/kafka3:/tmp/kraft-combined-logs
+#    command: ["bash", "-c", "/start-kafka.sh"]
+#    networks:
+#      - kafka-network
 
 networks:
   kafka-network:

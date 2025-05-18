@@ -10,14 +10,14 @@ import java.util.Properties;
  */
 public class SimpleKafkaProducer {
     private final Properties props;
-    private final KafkaProducer<String, String> producer;
+    private KafkaProducer<String, String> producer;
 
     public SimpleKafkaProducer() {
         this.props = new Properties();
-        props.put("bootstrap.servers", "kafka1:9092,kafka2:9094,kafka3:9096");
+        props.put("bootstrap.servers", "kafka1:9092,kafka2:9094");//,kafka3:9096
         props.put("key.serializer", "org.apache.kafka.common.serialization.StringSerializer");
         props.put("value.serializer", "org.apache.kafka.common.serialization.StringSerializer");
-        props.put("acks", "all");
+        //props.put("acks", "all");
 
         this.producer = new KafkaProducer<>(props);
         System.out.println("Producer created with properties: " + props);
