@@ -23,6 +23,19 @@ The output looks like text below:
     Topic: test-topic	TopicId: W0T1fYREQrG5osFtl3-_0g	PartitionCount: 1	ReplicationFactor: 1	Configs: min.insync.replicas=1,segment.bytes=1073741824
 	Topic: test-topic	Partition: 0	Leader: 1	Replicas: 1	Isr: 1
 
+To read all the messages stored in the topic:
+
+    kafka-console-consumer --bootstrap-server kafka1:9092 --topic test-topic --from-beginning
+
+Hi, hi
+
+    kafka-consumer-groups.sh --bootstrap-server kafka1:9092 --group my-consumer-group3 --topic test-topic --reset-offsets --to-earliest --execute
+
 List all consumer groups:
 
     kafka-consumer-groups --bootstrap-server kafka1:9092 --list
+
+This is how you run each module:
+
+- go to the root directory of the repository: **portfolio-advanced-examples/**
+- run: **mvn exec:java -pl kafka-intro/**
