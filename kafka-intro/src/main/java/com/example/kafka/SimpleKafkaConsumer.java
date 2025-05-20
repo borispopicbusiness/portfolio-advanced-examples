@@ -7,24 +7,23 @@ import org.apache.kafka.clients.consumer.KafkaConsumer;
 import java.time.Duration;
 import java.util.List;
 import java.util.Properties;
-import java.util.UUID;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 /**
  * A simple Kafka consumer that handles message consumption from specified topics.
  */
 public class SimpleKafkaConsumer {
-    private Properties props;
-    private KafkaConsumer<String, String> consumer;
-    private ConsumerRecords<String, String> records;
+    private final Properties props;
+    private final KafkaConsumer<String, String> consumer;
+    private final AtomicBoolean running = new AtomicBoolean(true);
+    private volatile Thread consumerThread;
 
     public SimpleKafkaConsumer() {
         props = new Properties();
-
-        props.put("bootstrap.servers","kafka1:9092,kafka2:9094");//,kafka3:9096
-        props.put("group.id","my-consumer-group3");
-        //props.put("group.id", UUID.randomUUID().toString());
-        props.put("key.deserializer","org.apache.kafka.common.serialization.StringDeserializer");
-        props.put("value.deserializer","org.apache.kafka.common.serialization.StringDeserializer");
+        props.put("bootstrap.servers", "kafka1:9092,kafka2:9094");
+        props.put("group.id", "my-consumer-group");
+        props.put("key.deserializer", "org.apache.kafka.common.serialization.StringDeserializer");
+        props.put("value.deserializer", "org.apache.kafka.common.serialization.StringDeserializer");
         props.put("auto.offset.reset", "earliest");
 
         consumer = new KafkaConsumer<>(props);
@@ -35,31 +34,49 @@ public class SimpleKafkaConsumer {
      * Consumes messages from the specified topic.
      */
     public void consume() {
-        while(true) {
-            records = consumer.poll(Duration.ofMillis(149));
-
-            for ( ConsumerRecord<String, String> record : records ) {
-                System.out.println("Received: " + record.value() + " from partition " + record.partition() + " at offset " + record.offset());
+        consumerThread = Thread.currentThread();
+        
+        while (running.get()) {
+            try {
+                Thread.sleep(1000);
+                ConsumerRecords<String, String> records = consumer.poll(Duration.ofSeconds(1));
+                for (ConsumerRecord<String, String> record : records) {
+                    System.out.println("Received: " + record.value() + 
+                        " from partition " + record.partition() + 
+                        " at offset " + record.offset());
+                }
+                if (records.count() > 0) {
+                    consumer.commitSync();
+                }
+            } catch (Exception e) {
+                if (running.get()) {
+                    System.err.println("Error during poll: " + e.getMessage());
+                    e.printStackTrace();
+                }
             }
-
-            if(records.count() > 0)
-                consumer.commitSync();
         }
     }
 
     /**
-     * Closes the consumer.
+     * Closes the consumer safely.
      */
     public void close() {
-        if(records.count() > 0) {
-            System.out.println("Committing last offsets...");
-            consumer.commitSync();
-            System.out.println("Last offsets committed successfully");
+        running.set(false);
+        
+        if (consumerThread != null) {
+            consumerThread.interrupt();
+            try {
+                consumerThread.join(5000); // Wait up to 5 seconds for the thread to finish
+            } catch (InterruptedException e) {
+                Thread.currentThread().interrupt();
+            }
         }
+
         try {
             consumer.close();
-        } catch(java.util.ConcurrentModificationException e) {
-            System.out.println("Ignoring ConcurrentModificationException");
+        } catch (Exception e) {
+            System.err.println("Error closing consumer: " + e.getMessage());
+            e.printStackTrace();
         }
     }
 }

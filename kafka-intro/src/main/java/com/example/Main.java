@@ -10,37 +10,31 @@ public class Main {
     public static void main(String[] args) {
         SimpleKafkaProducer producer = new SimpleKafkaProducer();
 
-        ExecutorService executorService = Executors.newFixedThreadPool(2);
-        executorService.submit(
-                () -> {
-                    try {
-                        while(true) {
-                            Thread.sleep(1000);
-                            producer.send("test-topic", "Hello World!");
-                        }
-                    } catch (Exception e) {
-                        e.printStackTrace();
-                    }
-                }
-        );
-
-        SimpleKafkaConsumer consumer = new SimpleKafkaConsumer();
-
+        ExecutorService executorService = Executors.newFixedThreadPool(1);
         executorService.submit(() -> {
             try {
-                while(true) {
-                    Thread.sleep(500);
-                    consumer.consume();
+                int i = 0;
+                while (true) {
+                    producer.send("test-topic", "Hello World! " + i++);
+                    Thread.sleep(1000);
                 }
             } catch (Exception e) {
+                System.err.println("Producer error: " + e.getMessage());
                 e.printStackTrace();
+            } finally {
+                producer.close();
             }
         });
+
+        SimpleKafkaConsumer consumer = new SimpleKafkaConsumer();
 
         Runtime.getRuntime().addShutdownHook(new Thread(() -> {
             System.out.println("Shutting down...");
             consumer.close();
             producer.close();
+            executorService.shutdown();
         }));
+
+        consumer.consume();
     }
 }

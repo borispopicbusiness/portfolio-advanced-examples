@@ -34,3 +34,8 @@ Hi, hi
 List all consumer groups:
 
     kafka-consumer-groups --bootstrap-server kafka1:9092 --list
+
+This is how you run each module:
+
+- go to the root directory of the repository: **portfolio-advanced-examples/**
+- run: **mvn exec:java -pl kafka-intro/**
